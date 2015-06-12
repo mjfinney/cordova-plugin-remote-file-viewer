@@ -1,40 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-id="com.kivra.remoteFileViewer" version="0.0.1">
-<name>Remote File Viewer</name>
-<description>Download a remote file and let a third party app registered for the file's MIME type present it</description>
-<license>Apache 2.0</license>
-<keywords>cordova,file,remote,temporary,viewer</keywords>
-<js-module src="www/remoteFileViewer.js" name="remoteFileViewer">
-  <clobbers target="window.viewRemoteFile" />
-</js-module>
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="com.kivra.remotefileviewer"
+        version="0.0.1">
+  <name>Remote File Viewer</name>
+  <description>
+    Download a remote file and let a third party app registered for the file's MIME type present it
+  </description>
+  <license>Apache 2.0</license>
+  <keywords>cordova,file,remote,temporary,viewer</keywords>
 
-<!-- android -->
-<platform name="android">
-  <js-module src="www/inappbrowser.js" name="inappbrowser">
-    <clobbers target="remoteFileViewer.open" />
-  </js-module>
-  
-  <config-file target="res/xml/config.xml" parent="/*">
-    <feature name="RemoteFileViewer"> 
-      <param name="android-package" value="com.kivra.RemoteFileViewer"/>
-    </feature>
-  </config-file>
-  
-  <!-- Turn the application into a fileprovider so it can create content:// paths  -->
-  <config-file target="AndroidManifest.xml" parent="/manifest/application">
-    <provider android:authorities="$PACKAGE_NAME.fileprovider"
-              android:exported="false"
-              android:grantUriPermissions="true"
-              android:name="android.support.v4.content.FileProvider">
-      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
-                 android:resource="@xml/provider_paths"/>
-    </provider>
-  </config-file>
+   <js-module src="www/remotefileviewer.js"
+               name="RemoteFileViewer">
+     <clobbers target="RemoteFileViewer.open" />
+   </js-module>
+  <!-- android -->
+  <platform name="android">
+   
+    
+    <config-file target="res/xml/config.xml" parent="/*">
+      <feature name="RemoteFileViewer"> 
+        <param name="android-package" value="com.kivra.remotefileviewer.RemoteFileViewer"/>
+      </feature>
+    </config-file>
 
-  <!-- makes the application's cache dir available for the fileprovider -->
-  <resource-file src="src/android/res/xml/provider_paths.xml" target="res/xml/provider_paths.xml"/>
-  
-  <source-file src="src/android/RemoteFileViewer.java" target-dir="src/com/kivra/remotefileviewer"/>
+    <!-- Turn the application into a fileprovider to facilitate secure sharing of files
+         associated with the app through content:// URI:s   -->
+    <config-file target="AndroidManifest.xml" parent="/manifest/application">
+      <provider android:authorities="$PACKAGE_NAME.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true"
+                android:name="android.support.v4.content.FileProvider">
+        <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                   android:resource="@xml/provider_paths"/>
+      </provider>
+    </config-file>
 
-</platform>
+    <!-- makes the application's cache dir available for the fileprovider -->
+    <resource-file src="src/android/res/xml/provider_paths.xml" target="res/xml/provider_paths.xml"/>
+    
+    <source-file src="src/android/RemoteFileViewer.java" target-dir="src/com/kivra/remotefileviewer"/>
+  </platform>
+</plugin>
