@@ -5,10 +5,9 @@ var modulemapper = require('cordova/modulemapper');
 
 function RemoteFileViewer() {
   this.channels = {
-    'loadstart': channel.create('loadstart'),
-    'loadstop' : channel.create('loadstop'),
-    'loaderror' : channel.create('loaderror'),
-    'exit' : channel.create('exit')
+    'update': channel.create('update'),
+    'error' : channel.create('error'),
+    'success' : channel.create('success'),
   };
 }
 
@@ -17,9 +16,6 @@ RemoteFileViewer.prototype = {
     if (event && (event.type in this.channels)) {
       this.channels[event.type].fire(event);
     }
-  },
-  open: function (eventname) {
-    exec(null, null, "InAppBrowser", "close", []);
   },
   addEventListener: function (eventname,f) {
     if (eventname in this.channels) {
