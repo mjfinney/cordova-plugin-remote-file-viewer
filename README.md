@@ -13,3 +13,19 @@ app's cache.
     cd $YOUR_CORDOVA_PROJECT
     cordova plugin add $PATH_TO_LOCAL_CLONE_OF_THIS_REPO
 
+## Usage
+
+
+    // Example function to view a remote file and log
+    // progress in the console:
+    
+    function viewRemoteFile(url) {
+        var ref = window.RemoteFileViewer.open(url);
+        function onEvent (e) {
+            var msg = JSON.stringify(e);
+            console.log(msg);
+        }
+        ref.addEventListener('update', onEvent);
+        ref.addEventListener('success', onEvent);
+        ref.addEventListener('error', onEvent);
+    };
