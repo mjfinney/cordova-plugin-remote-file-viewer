@@ -5,11 +5,12 @@ import java.net.HttpURLConnection;
 import javax.net.ssl.HttpsURLConnection;
 import java.net.URL;
 import java.io.BufferedInputStream;
-import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 import android.support.v4.content.FileProvider;
 import android.content.ActivityNotFoundException;
@@ -19,6 +20,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
+import android.webkit.MimeTypeMap;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
@@ -26,6 +28,7 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.PluginResult;
+import org.apache.cordova.file.FileUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,6 +46,7 @@ public class RemoteFileViewer extends CordovaPlugin {
     private static String FILE_PROVIDER_PACKAGE_ID;
     
     private static final String FILE_VIEWER = "_fileviewer";
+    private static final String DOWNLOAD_DIR = "downloaded";
     private static final String CONTENT_DIR = "content";
 
     public static enum Error {
@@ -57,6 +61,39 @@ public class RemoteFileViewer extends CordovaPlugin {
             this.msg = msg;
         }
     }
+
+    /**
+     * Returns the MIME Type of the file by looking at file name extension in
+     * the URL.
+     *
+     * @param url
+     * @return
+     */
+    private static String getMimeType(String url) {
+    	String mimeType = null;
+    
+    	String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+    	if (extension != null) {
+    		MimeTypeMap mime = MimeTypeMap.getSingleton();
+    		mimeType = mime.getMimeTypeFromExtension(extension);
+    	}
+    
+    	System.out.println("Mime Type: " + mimeType);
+    
+    	return mimeType;
+    }
+
+    /*
+    private static void copy(File src, File dst) throws IOException {
+        FileInputStream inStream = new FileInputStream(src);
+        FileOutputStream outStream = new FileOutputStream(dst);
+        FileChannel inChannel = inStream.getChannel();
+        FileChannel outChannel = outStream.getChannel();
+        inChannel.transferTo(0, inChannel.size(), outChannel);
+        inStream.close();
+        outStream.close();
+    }
+    */
     
     private class ViewRemoteFileTask extends AsyncTask<String, Void, File> {
         
@@ -65,7 +102,8 @@ public class RemoteFileViewer extends CordovaPlugin {
         private String contentType;
         private int contentLength;
         private Intent intent;
-            
+
+
         @Override
         protected void onPreExecute() {
             this.context = RemoteFileViewer.this.cordova.getActivity();
@@ -75,25 +113,35 @@ public class RemoteFileViewer extends CordovaPlugin {
         
         @Override
         protected File doInBackground(String... urls) {
-            File dir = new File(this.context.getCacheDir(), CONTENT_DIR);
             String fileUrlString = urls[0];
-            dir.mkdirs();
-            File outFile = new File(dir, Uri.parse(fileUrlString).getLastPathSegment());
+            File dir;
+            File outFile;
+            if (fileUrlString.contains("cache")) {
+                //File appdir = new File(this.context.getApplicationInfo().dataDir);
+                //File oldFile = new File(fileUrlString);
+                //String appDir = this.context.getApplicationInfo().dataDir;
+                //File oldFile = new File(appDir + '/' + fileUrlString); 
+
+                dir = new File(this.context.getCacheDir(), CONTENT_DIR);
+                outFile = new File(dir, Uri.parse(fileUrlString).getLastPathSegment());
+                /*
+                try{
+                    copy(oldFile, outFile);
+                }catch(IOException e){
+                    e.printStackTrace();
+                    Log.e(LOG_TAG, "Issue copying file: "+oldFile);
+                    Log.e(LOG_TAG, "error: "+e);
+                }
+                */
+            } else {
+                dir = new File(this.context.getFilesDir(), DOWNLOAD_DIR);
+                outFile = new File(dir, Uri.parse(fileUrlString).getLastPathSegment());
+            }
+            //Log.d(LOG_TAG, "fileUrlString: "+fileUrlString);
+            //Log.d(LOG_TAG, "file: "+outFile);
+            //Log.d(LOG_TAG, "dir: "+dir);
             try {
-                URL fileUrl = new URL(fileUrlString);
-                String protocol = fileUrl.getProtocol();
-                URLConnection urlConnection;
-                if (protocol.equals("https")) {
-                    urlConnection = (HttpsURLConnection) fileUrl.openConnection();
-                }
-                else if (protocol.equals("http")) {
-                    urlConnection = (HttpURLConnection) fileUrl.openConnection();
-                }
-                else {
-                    throw new IOException("protocol not supported: "+protocol);
-                }
-                contentType = urlConnection.getContentType();
-                contentLength = urlConnection.getContentLength();
+                contentType = getMimeType(fileUrlString);
                 intent.setType(contentType);
                 Uri contentUri = FileProvider.getUriForFile(this.context, FILE_PROVIDER_PACKAGE_ID, outFile);
                 intent.setDataAndType(contentUri, contentType);
@@ -102,22 +150,10 @@ public class RemoteFileViewer extends CordovaPlugin {
                 if (intent.resolveActivity(context.getPackageManager()) == null) {
                     throw new ActivityNotFoundException();
                 }
-                InputStream is = new BufferedInputStream(urlConnection.getInputStream());
-                FileOutputStream fos = new FileOutputStream(outFile);
-                byte[] buffer = new byte[4096];
-                int len = 0;
-                int tot = 0;
-                double ratio = 0;
-                Log.d(LOG_TAG, "total: "+String.valueOf(contentLength));
-                while ( (len = is.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len);
-                    tot += len;
-                    RemoteFileViewer.this.sendUpdate("downloading", (double) tot/contentLength); 
-                }
-                fos.close();
                 return outFile;
             }
             catch (Exception e) {
+                Log.d(LOG_TAG, "exception: "+e);
                 this.exception = e;
                 return null;
             }
