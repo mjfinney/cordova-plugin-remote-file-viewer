@@ -1,0 +1,31 @@
+{
+  "name": "cordova-plugin-remote-file-viewer",
+  "version": "0.0.1",
+  "description": "Cordova RemoteFileViewer Plugin",
+  "cordova": {
+    "id": "cordova-plugin-remote-file-viewer",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kivra/cordova-plugin-remote-file-viewer"
+  },
+  "keywords": [
+    "cordova",
+    "file",
+    "remote",
+    "viewer",
+    "downloader",
+    "cordova-android"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.1.0"
+    }
+  ],
+  "author": "Kivra",
+  "license": "Apache 2.0"
+}
