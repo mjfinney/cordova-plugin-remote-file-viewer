@@ -27,7 +27,7 @@
     <!-- Turn the application into a fileprovider to facilitate secure sharing of files
          associated with the app through content:// URI:s   -->
     <config-file target="AndroidManifest.xml" parent="/manifest/application">
-      <provider android:authorities="$PACKAGE_NAME.fileprovider"
+      <provider android:authorities="${applicationId}.provider"
                 android:exported="false"
                 android:grantUriPermissions="true"
                 android:name="android.support.v4.content.FileProvider">
